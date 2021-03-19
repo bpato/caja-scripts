@@ -1,0 +1,79 @@
+#!/bin/bash
+
+FIN=false
+while [ "$FIN" = "false" ]
+do
+ 	MENU=$(zenity --list --title="Gestor CBZ Menu" --width="150" --height="250" --text="Elige una opción" --column="Opciones" "Eliminar guiones bajos" "Eliminar hoja" "Pasar de cbr a cbz" "Salir")
+ 	
+ 	if [ "$?" = 1 ]
+ 	then
+ 		FIN=true
+ 	fi
+ 	
+case $MENU in
+"Eliminar guiones bajos")
+ 
+echo -e "$CAJA_SCRIPT_SELECTED_URIS"| while read URIS
+do
+if [ "$URIS" == "" ];then break; fi
+#zenity --warning --text="$URIS" 
+X=`echo $CAJA_SCRIPT_CURRENT_URI|sed "s/\///g"`
+FILE=`echo $URIS|sed "s/\///g;s/^$X//"`
+NEW_FILE=`echo $FILE|sed "s/\_/ /g"`
+Y=`echo $FILE| grep "_"`
+if [ ! -z $Y ];then
+	mv "$FILE" "$NEW_FILE"
+	#zenity --warning --text="YES" 
+fi
+done
+;;
+
+"Eliminar hoja")
+HOJA=$(zenity --entry --text="Hoja que desea borrar" --entry-text="001.jpg")
+echo "$CAJA_SCRIPT_SELECTED_URIS" | while read URIS;do
+URIS=`echo -e $(echo "$URIS" | sed 'y/+/ /;s/%/\\\x/g')`
+#zenity --warning --text="---$URIS"
+if [ "$URIS" == "" ];then break; fi
+X=`echo -e $(echo "$CAJA_SCRIPT_CURRENT_URI" | sed 's/\///g;y/+/ /;s/%/\\\x/g')`
+FILE=`echo "$URIS"|sed "s/\///g;s/^$X//"`
+#zenity --warning --text="$FILE - $HOJA"
+Y=`file "$FILE"|grep -i "Zip archive data"`
+if [ -n "$Y" ];then 
+	zip  -d "$FILE" "$HOJA"
+else
+	zenity --warning --text="No es un archivo Zip/Cbz"
+fi
+done
+;;
+
+"Pasar de cbr a cbz")
+echo "$CAJA_SCRIPT_SELECTED_URIS" | while read URIS;do
+URIS=`echo -e $(echo "$URIS" | sed 'y/+/ /;s/%/\\\x/g')`
+#zenity --warning --text="---$URIS"
+if [ "$URIS" == "" ];then break; fi
+X=`echo -e $(echo "$CAJA_SCRIPT_CURRENT_URI" | sed 's/\///g;y/+/ /;s/%/\\\x/g')`
+FILE=`echo "$URIS"|sed "s/\///g;s/^$X//"`
+NEW_FILE=`echo "$FILE"|sed "s/CBR$/cbr/;s/cbr$/cbz/"`
+Y=`file "$FILE"|grep -i "RAR archive data"`
+
+if [ -n "$Y" ];then
+	#zenity --warning --text="---$FILE"
+	rm -r .0
+	mkdir .0
+	unrar x "$FILE" ./.0
+	cd ./.0
+	zip -9 -r ../"$NEW_FILE" *
+	cd ../
+else
+	zenity --warning --text="No es un archivo RAR/Cbr"
+fi
+done
+rm -r .0
+;;
+
+"Salir") 
+FIN=true
+;;
+esac
+done
+exit 0	

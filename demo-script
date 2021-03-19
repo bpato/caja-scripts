@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#################################
+# jueves, 10 de marzo de 2016  #
+#################################
+#
+#
+#
+#
+#-------------------------------------------------------------------------------
+# NAUTILUS_SCRIPT_SELECTED_FILE_PATHS: 
+# Lista los path de los ficheros actualmente seleccionados.
+# Devolvería un path como: "/home/user/Mi PDF.pdf".
+#
+# NAUTILUS_SCRIPT_SELECTED_URIS:
+# Lista de URIs de los ficheros delimitadas por \n (URI=Universal Resource Indicator).
+# Devolvería varias URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_CURRENT_URI:
+# Actual URI del fichero selecionado..
+# Devolvería una URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_WINDOW_GEOMETRY:
+# Tamaño y localización de la ventana.
+# Devolveria una cadena al estilo: 1000×800+10+50
+# Indica dimensiones hor. y vert.de la ventana y su posicion x, y.
+
+#All executable files in this folder will appear in the Scripts menu. Choosing a script from the menu will run that script.
+
+#When executed from a local folder, scripts will be passed the selected file names. When executed from a remote folder (e.g. a folder showing web or ftp content), scripts will be passed no parameters.
+
+#In all cases, the following environment variables will be set by Caja, which the scripts may use:
+
+#CAJA_SCRIPT_SELECTED_FILE_PATHS: newline-delimited paths for selected files (only if local)
+
+#CAJA_SCRIPT_SELECTED_URIS: newline-delimited URIs for selected files
+
+#CAJA_SCRIPT_CURRENT_URI: URI for current location
+
+#CAJA_SCRIPT_WINDOW_GEOMETRY: position and size of current window
+
+#CAJA_SCRIPT_NEXT_PANE_SELECTED_FILE_PATHS: newline-delimited paths for selected files in the inactive pane of a split-view window (only if local)
+
+#CAJA_SCRIPT_NEXT_PANE_SELECTED_URIS: newline-delimited URIs for selected files in the inactive pane of a split-view window
+
+#CAJA_SCRIPT_NEXT_PANE_CURRENT_URI: URI for current location in the inactive pane of a split-view window
+#-------------------------------------------------------------------------------
+
+# Espacio para pruebas
+
+#-------------------------------------------------------------------------------
+
+FILES=$(echo "$CAJA_SCRIPT_SELECTED_FILE_PATHS"| awk -F\/ '{print $NF}')
+# 'echo -e' devuelve la información en una linea.
+MESSAGE=$(echo "NAUTILUS_SCRIPT_SELECTED_URIS\n$NAUTILUS_SCRIPT_SELECTED_URIS\nNAUTILUS_SCRIPT_CURRENT_URI\n$NAUTILUS_SCRIPT_CURRENT_URI\n\nNAUTILUS_SCRIPT_SELECTED_FILE_PATHS\n$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS\nSELECTED_FILES\n$FILES")
+zenity --info --text="$MESSAGE" --no-wrap
+exit 0

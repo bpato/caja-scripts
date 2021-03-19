@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#################################
+# viernes, 11 de marzo de 2016 #
+#################################
+#
+#
+#
+#
+#-------------------------------------------------------------------------------
+# NAUTILUS_SCRIPT_SELECTED_FILE_PATHS: 
+# Lista los path de los ficheros actualmente seleccionados.
+# Devolvería un path como: "/home/user/Mi PDF.pdf".
+#
+# NAUTILUS_SCRIPT_SELECTED_URIS:
+# Lista de URIs de los ficheros delimitadas por \n (URI=Universal Resource Indicator).
+# Devolvería varias URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_CURRENT_URI:
+# Actual URI del fichero selecionado..
+# Devolvería una URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_WINDOW_GEOMETRY:
+# Tamaño y localización de la ventana.
+# Devolveria una cadena al estilo: 1000×800+10+50
+# Indica dimensiones hor. y vert.de la ventana y su posicion x, y.
+#-------------------------------------------------------------------------------
+progress_bar() {
+    zenity --progress --pulsate --auto-close --no-cancel --width 400 --text="$1"
+}
+
+if [ ! -f "/usr/bin/unrar" ];then
+    zenity --error --title="Error: rar no se encuentra instalado" \
+        --text="\"sudo apt-get install rar\"" \
+        --no-wrap
+    exit 1
+fi
+
+DIR=$(pwd)
+WORKDIR=$(mktemp -d)
+
+
+for path in ${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS// /%20}
+do
+    file=${path##*/}
+    file=${file//\%20/ }
+    
+    type=$(file --mime-type "$file"| awk -F\/ '{print $NF}')
+    echo $type >> a
+    if [[ "$type" == "x-rar" ]];then
+        if [ ! -d "$WORKDIR" ];then
+            mkdir "$WORKDIR"
+        fi
+        
+        unrar x "$file" "$WORKDIR" | \
+            progress_bar "Descomprimiendo $file"
+# nos situamos en la carpeta para evitr que zip comprima todo el directorio
+        cd "$WORKDIR"
+        zip -9 -r -m ../"${file%.*}.cbz" * | \
+            progress_bar "Comprimiendo ${file%.*}.cbz"
+        mv ../"${file%.*}.cbz" "$DIR"
+        cd "$DIR"
+    else
+        zenity --error --text="Error:\n\"$file\" no es un archivo x-rar" --no-wrap
+    fi    
+done
+
+rmdir "$WORKDIR"
+zenity --info --text="Trabajo terminado" --no-wrap
+exit 0

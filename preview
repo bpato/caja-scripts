@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#################################
+# viernes, 11 de marzo de 2016  #
+#################################
+#
+#
+#
+#
+#-------------------------------------------------------------------------------
+# NAUTILUS_SCRIPT_SELECTED_FILE_PATHS: 
+# Lista los path de los ficheros actualmente seleccionados.
+# Devolvería un path como: "/home/user/Mi PDF.pdf".
+#
+# NAUTILUS_SCRIPT_SELECTED_URIS:
+# Lista de URIs de los ficheros delimitadas por \n (URI=Universal Resource Indicator).
+# Devolvería varias URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_CURRENT_URI:
+# Actual URI del fichero selecionado..
+# Devolvería una URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_WINDOW_GEOMETRY:
+# Tamaño y localización de la ventana.
+# Devolveria una cadena al estilo: 1000×800+10+50
+# Indica dimensiones hor. y vert.de la ventana y su posicion x, y.
+#-------------------------------------------------------------------------------
+for path in ${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS// /%20}
+do
+    file=${path##*/}
+    file=${file//\%20/ }
+    
+    type=$(file --mime-type "$file"| awk '{print $NF}')
+    
+    f=$(file "$file")
+    
+    if [[ ${type%/*} == "text" ]];then
+        h=$(cat "$file"| head | awk '{if (NR>=2) print}')
+    else
+        h=$(cat "$file"| head | xxd | awk '{if (NR<=16) print $N" "}')
+        h=${h^^}
+    fi
+    
+    pre_mess=$(echo -e "$f\n\n$h")
+    zenity --info --title="Datos de \"$file\"" --text="$pre_mess" --no-wrap 
+done

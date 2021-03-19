@@ -1,0 +1,66 @@
+#!/bin/bash
+
+#################################
+#  viernes, 11 de marzo de 2016 #
+#################################
+# This script opens Guake in the directory you select.
+# Install in ~/.config/caja/scripts
+# When a directory is selected, go there. Otherwise go to current
+# directory. If more than one directory is selected, show error.
+#-------------------------------------------------------------------------------
+# NAUTILUS_SCRIPT_SELECTED_FILE_PATHS: 
+# Lista los path de los ficheros actualmente seleccionados.
+# Devolvería un path como: "/home/user/Mi PDF.pdf".
+#
+# NAUTILUS_SCRIPT_SELECTED_URIS:
+# Lista de URIs de los ficheros delimitadas por \n (URI=Universal Resource Indicator).
+# Devolvería varias URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_CURRENT_URI:
+# Actual URI del fichero selecionado..
+# Devolvería una URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_WINDOW_GEOMETRY:
+# Tamaño y localización de la ventana.
+# Devolveria una cadena al estilo: 1000×800+10+50
+# Indica dimensiones hor. y vert.de la ventana y su posicion x, y.
+#-------------------------------------------------------------------------------
+
+if [ -n "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" ];then
+    set "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS"
+    if [ $# -eq 1 ];then # $# -> nº de parámetros
+        DESTINATION="$1"
+        # Go to file's directory if it's a file
+        if [ ! -d "$DESTINATION" ];then
+            DESTINATION=$(dirname "$DESTINATION")
+            NAME=$(echo "${DESTINATION##*/}")
+        fi
+    else
+        zenity --error --title="Error - Open terminal here" \
+            --text="You can only select one directory." --no-wrap
+        exit 1
+    fi
+else
+    DESTINATION=$(echo "${NAUTILUS_SCRIPT_CURRENT_URI#file://}"| \
+        awk '{gsub("%","\\x"); print}')
+    NAME=$(echo ${NAUTILUS_SCRIPT_CURRENT_URI##*/}| \
+        awk '{gsub("%","\\x"); print}')
+    DESTINATION=$(printf "%b" "$DESTINATION")
+    NAME=$(printf '%b' "$NAME")
+fi
+
+# It's only possible to go to local directories
+#echo "${DESTINATION%%/*}" >> "ABRIR_GUAKE.log"
+if [ -n "${DESTINATION%%/*}" ];then #solo directorios bajo raiz /
+    zenity --error --title="Error - Open terminal here" \
+        --text="${DESTINATION%%/*}\nOnly local directories can be used." --no-wrap
+    exit 1
+fi
+
+if [ -f "/usr/bin/guake" ] || [ -f $HOME"/bin/guake" ];then
+    guake -n "$DESTINATION" -r "${NAME:00:30}" && guake -t
+else
+    cd "$DESTINATION"
+    exec x-terminal-emulator
+fi
+exit 0

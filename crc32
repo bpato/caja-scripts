@@ -1,0 +1,78 @@
+#!/bin/bash
+
+#################################
+#  viernes, 11 de marzo de 2016  #
+#################################
+#
+#
+#
+#
+#-------------------------------------------------------------------------------
+# NAUTILUS_SCRIPT_SELECTED_FILE_PATHS: 
+# Lista los path de los ficheros actualmente seleccionados.
+# Devolvería un path como: "/home/user/Mi PDF.pdf".
+#
+# NAUTILUS_SCRIPT_SELECTED_URIS:
+# Lista de URIs de los ficheros delimitadas por \n (URI=Universal Resource Indicator).
+# Devolvería varias URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_CURRENT_URI:
+# Actual URI del fichero selecionado..
+# Devolvería una URI como: "file:///home/user/Mi%20PDF.pdf".
+#
+# NAUTILUS_SCRIPT_WINDOW_GEOMETRY:
+# Tamaño y localización de la ventana.
+# Devolveria una cadena al estilo: 1000×800+10+50
+# Indica dimensiones hor. y vert.de la ventana y su posicion x, y.
+#-------------------------------------------------------------------------------
+
+getTab() {
+    name="${1// /+}"
+    length=${#name}
+    
+    if [ $length -lt 41 ];then
+        col=$[41-$length]
+    else
+        col=$[73-$length]
+    fi
+    tab=$(echo "$col/4" | bc )
+    
+    #echo "$name: $length: $col: $tab" >> CRC32.log
+    for i in $(seq 0 $tab)
+    do
+        TAB=$TAB"\t"
+    done
+}
+
+if [ ! -f "/usr/bin/crc32" ];then
+    zenity --error --title="Error:" \
+        --text="crc32 no se encuentra instalado" \
+        --no-wrap
+    exit 1
+fi
+
+if [ -f "crc.32" ];then
+    echo -e "#-------------------------------------------------------------------------------"\
+    "\n\n" >> "crc.32"
+else
+    echo -e "#-------------------------------------------------------------------------------"\
+"\n#\n#\t\tLISTA CRC32 DE ARCHIVOS"\
+"\n#\n#-------------------------------------------------------------------------------"\
+    "\n\n" > "crc.32"
+fi
+
+for path in ${NAUTILUS_SCRIPT_SELECTED_FILE_PATHS// /%20}
+do
+    file=${path##*/}
+    file=${file//\%20/ }
+    
+    if [ -f "$file" ];then
+        CRC32=$(crc32 "$file")
+        TAB=""
+        getTab "$file"
+        echo -e "$file$TAB${CRC32^^}" >> "crc.32"
+    fi
+done
+MESSAGE=$(cat "crc.32")
+zenity --info --title="lista CRC32 de archivos" --text="$MESSAGE" --no-wrap
+exit 0
